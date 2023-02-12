@@ -1,55 +1,22 @@
 import _ from "lodash";
-import ytpl from "ytpl";
-import ytsr from "ytsr";
+import type { Playlist, Video } from "youtube-sr";
+import { YouTube } from "youtube-sr";
 
 export class Util {
   /**
-   * Search youtube video or playlist
-   *
-   * @param input
-   * @param type
-   * @param options
-   *
-   * @returns
-   */
-  static async search(
-    input: string,
-    type: "Video" | "Playlist",
-    options?: ytsr.Options
-  ): Promise<ytsr.Item[]> {
-    const filters = await ytsr.getFilters(input);
-    const search = filters.get("Type")?.get(type);
-    if (!search?.url) {
-      return [];
-    }
-
-    const result = await ytsr(search.url, options);
-    return result.items;
-  }
-
-  /**
-   * Search youtube song by name
+   * Search youtube song by name or URL
    *
    * @param input
    *
    * @returns
    */
-  static async getSong(input: string): Promise<ytsr.Video | undefined> {
-    const filters = await ytsr.getFilters(input);
-    const search = filters.get("Type")?.get("Video");
-    if (!search?.url) {
-      return;
+  static getSong(input: string): Promise<Video | undefined> {
+    try {
+      new URL(input); // Throws an exception if `input` is not a URL
+      return YouTube.getVideo(input);
+    } catch (e) {
+      return YouTube.searchOne(input, "video");
     }
-
-    const result = await ytsr(search.url, { limit: 1 });
-    if (result.items.length < 1 || result.items[0]?.type !== "video") {
-      return;
-    }
-
-    // Extract the video URL from the command
-    const song = result.items[0];
-
-    return song;
   }
 
   /**
@@ -59,41 +26,34 @@ export class Util {
    *
    * @returns
    */
-  static async getSongs(inputs: string[]): Promise<ytsr.Video[]> {
+  static async getSongs(inputs: string[]): Promise<Video[]> {
     const results = await Promise.all(
-      inputs.map((input) => this.getSong(input))
+      inputs.map((input) => YouTube.searchOne(input, "video"))
     );
     return _.compact(results);
   }
 
   /**
-   * Search youtube playlist
+   * Search youtube playlist by name or URL
    *
    * @param input
    * @param options
    * @returns
    */
-  static async getPlaylist(
-    input: string,
-    options?: ytsr.Options
-  ): Promise<ytpl.Result | undefined> {
-    const filters = await ytsr.getFilters(input);
-    const search = filters.get("Type")?.get("Playlist");
-    if (!search?.url) {
-      return;
+  static async getPlaylist(input: string): Promise<Playlist | undefined> {
+    let playlistUrl;
+
+    try {
+      new URL(input); // Throws an exception if `input` is not a URL
+      playlistUrl = input;
+    } catch (e) {
+      const playlist = await YouTube.searchOne(input, "playlist");
+      if (!playlist?.url) {
+        return;
+      }
+      playlistUrl = playlist.url;
     }
 
-    const result = await ytsr(search.url, options ?? { limit: 1 });
-    const playlistData = result.items[0];
-    if (!playlistData || playlistData.type !== "playlist") {
-      return;
-    }
-
-    const playlist = await ytpl(playlistData.playlistID);
-    if (!playlist.items.length) {
-      return;
-    }
-
-    return playlist;
+    return YouTube.getPlaylist(playlistUrl, { fetchAll: true });
   }
 }

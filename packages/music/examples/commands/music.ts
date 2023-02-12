@@ -158,7 +158,7 @@ export class music {
   @Slash({ description: "Play a playlist" })
   async playlist(
     @SlashOption({
-      description: "playlist name",
+      description: "playlist name or URL",
       name: "playlist",
       type: ApplicationCommandOptionType.String,
     })

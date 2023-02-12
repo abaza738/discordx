@@ -14,8 +14,7 @@ import {
 } from "@discordjs/voice";
 import type { Guild, StageChannel, VoiceChannel } from "discord.js";
 import _ from "lodash";
-import type ytpl from "ytpl";
-import type { Video } from "ytsr";
+import type { Video } from "youtube-sr";
 
 import type { CommonTrack, ITrackOptions, Player } from "../index.js";
 import { PlayerErrors, Util, YoutubeTrack } from "../index.js";
@@ -583,17 +582,17 @@ export abstract class Queue<T extends Player = Player> {
    * @returns
    */
   public async playlist(
-    search: string | ytpl.Result,
+    search: string,
     options?: ITrackOptions,
     enqueueTop?: boolean
   ): Promise<YoutubeTrack[] | undefined> {
-    const playlist =
-      typeof search === "string" ? await Util.getPlaylist(search) : search;
+    const playlist = await Util.getPlaylist(search);
+
     if (!playlist) {
       return;
     }
 
-    const tracks = playlist.items.map(
+    const tracks = playlist.videos.map(
       (video) => new YoutubeTrack(video, this.player, options)
     );
     this.enqueue(tracks, enqueueTop);

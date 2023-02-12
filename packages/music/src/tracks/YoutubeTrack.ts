@@ -1,8 +1,8 @@
 import type { AudioResource } from "@discordjs/voice";
 import { createAudioResource, StreamType } from "@discordjs/voice";
 import type { GuildMember, User } from "discord.js";
+import type { Video } from "youtube-sr";
 import type ytpl from "ytpl";
-import type { Video } from "ytsr";
 
 import type { CommonTrack, Player } from "../index.js";
 import { ytdl } from "../index.js";
@@ -31,8 +31,8 @@ export class YoutubeTrack extends Track {
     public player: Player,
     public options?: ITrackOptions
   ) {
-    super(info.title, info.url);
-    this.title = info.title;
+    super(info.title ?? "-", info.url);
+    this.title = info.title ?? "-";
     this.url = info.url;
   }
 
